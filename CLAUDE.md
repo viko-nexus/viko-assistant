@@ -19,7 +19,7 @@ python -m pytest tests/self_engineer/ -v   # self-engineer tests only
 ```
 
 Find running process: `pgrep -f "python viko.py"`
-Restart: kill the PID, then `nohup .venv/bin/python viko.py > /tmp/viko.log 2>&1 &`
+Restart: kill the PID, then `nohup .venv/bin/python -u viko.py > /tmp/viko.log 2>&1 &`
 
 ---
 
