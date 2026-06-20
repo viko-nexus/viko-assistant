@@ -31,6 +31,7 @@ _log = get_logger("main")
 from viko.tools.declarations import TOOL_DECLARATIONS
 from viko.tools.executor import execute_tool as _execute_tool_fn
 import viko.core.offline as _offline
+import viko.core.client as _client_module
 
 
 def get_base_dir():
@@ -53,6 +54,7 @@ SEND_SAMPLE_RATE    = 16000
 RECEIVE_SAMPLE_RATE = 24000
 CHUNK_SIZE          = 1024
 SPEECH_THRESHOLD    = 40    # int16 RMS — active speech (MacBook Air mic level)
+AUDIO_GAIN          = 3.0   # software amplification for output (1.0 = no change)
 SILENCE_CHUNKS      = 20    # ~1.3s silence ends an utterance
 MIN_SPEECH_CHUNKS   = 8     # ~512ms minimum speech to process
 # NOTE: lowered to clear the stale Jun-7 voice profile, which scores the owner's
@@ -687,6 +689,9 @@ class VikoLive:
                     except asyncio.QueueEmpty:
                         break
                 data = b"".join(chunks)
+                if AUDIO_GAIN != 1.0:
+                    pcm = np.frombuffer(data, dtype=np.int16)
+                    data = np.clip(pcm * AUDIO_GAIN, -32768, 32767).astype(np.int16).tobytes()
                 await asyncio.to_thread(stream.write, data)
                 if self.audio_in_queue.empty():
                     # Debounce: schedule speaking=False 150ms from now.
@@ -809,6 +814,7 @@ class VikoLive:
                         _first_connect = False
 
                     print("[Viko] Connected.")
+                    _client_module.active_model = "Gemini 3.1 Flash Live"
                     self.ui.set_state("LISTENING")
                     self.ui.write_log("SYS: Viko online.")
 
@@ -859,6 +865,11 @@ class VikoLive:
                 self.set_speaking(False)
                 try:
                     self.ui.set_state("OFFLINE")
+                    if _first_connect:
+                        # Never connected — dismiss boot screen so dashboard shows
+                        self.ui.set_boot_progress(1.0, "GEMINI OFFLINE")
+                        _first_connect = False
+                    _client_module.active_model = ""  # cleared until OpenRouter picks up
                 except RuntimeError:
                     _reconnect = False  # Qt window destroyed — stop reconnect loop
                 if _reconnect:

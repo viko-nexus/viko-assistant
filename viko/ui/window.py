@@ -371,8 +371,14 @@ class MainWindow(QMainWindow):
             self._boot_screen = None
         if self._ready and not self.isVisible():
             pass  # already handled
-        self._apply_state("LISTENING")
-        self._activity.append_log("SYS: Viko online.")
+        state = getattr(self, "_state_val", "LISTENING")
+        if state in ("THINKING", "IDLE"):
+            state = "LISTENING"
+        self._apply_state(state)
+        if state == "OFFLINE":
+            self._activity.append_log("SYS: Gemini offline — mode offline aktif.")
+        else:
+            self._activity.append_log("SYS: Viko online.")
 
     def set_boot_progress(self, pct: float, label: str):
         self._boot_sig.emit(pct, label)
@@ -616,7 +622,9 @@ class MainWindow(QMainWindow):
         self._state_val = state
         if not self._muted and not self._paused:
             self._hud.set_state(state)
-        self._left.set_online(state not in ("IDLE", "OFFLINE"))
+        online = state not in ("IDLE", "OFFLINE")
+        self._left.set_online(online)
+        self._right_metrics.set_gemini_online(online)
 
     def _on_log(self, text: str):
         self._activity.append_log(text)

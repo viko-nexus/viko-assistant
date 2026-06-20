@@ -24,8 +24,10 @@ def pri(a=255): return _c(0,   212, 255, a)
 def amb(a=255): return _c(255, 179, 71,  a)
 def suc(a=255): return _c(0,   255, 159, a)
 
+BASE_FONT_OFFSET = 4  # global readability bump (+4pt on all fonts)
+
 def F(sz: int, bold: bool = False) -> QFont:
-    f = QFont("Courier New", sz)
+    f = QFont("Courier New", sz + BASE_FONT_OFFSET)
     f.setBold(bold)
     return f
 

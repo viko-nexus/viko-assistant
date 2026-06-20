@@ -61,6 +61,7 @@ RETRY_DELAY           = 2
 RATE_LIMIT_COOLDOWN   = 60
 
 _rate_limited: dict[str, float] = {}
+active_model: str = ""  # last model that successfully responded
 
 
 class LLMClient:
@@ -159,6 +160,8 @@ class LLMClient:
             logger.info(f"[LLMClient] Trying: {m}")
             result = self._call(m, messages, max_tokens, temperature, response_format)
             if result:
+                global active_model
+                active_model = m
                 logger.info(f"[LLMClient] Success: {m}")
                 return result
 

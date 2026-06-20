@@ -6,7 +6,7 @@ import os
 from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF, pyqtSignal
 from PyQt6.QtGui import (
     QColor, QPainter, QPainterPath, QPen, QBrush,
-    QLinearGradient, QRadialGradient, QConicalGradient, QFontMetrics,
+    QLinearGradient, QRadialGradient, QConicalGradient, QFontMetrics, QFont,
 )
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLabel,
@@ -168,7 +168,7 @@ class MetricCard(QWidget):
         self._val_fn = val_fn   # () -> (float 0..1, str)
         self._col    = color or PRI
         self._tick   = 0
-        self.setFixedHeight(78)
+        self.setFixedHeight(90)
         t = QTimer(self); t.timeout.connect(self._step); t.start(60)
 
     def _step(self): self._tick += 1; self.update()
@@ -182,7 +182,7 @@ class MetricCard(QWidget):
         p.setBrush(QBrush(_c(8, 19, 34, 215)))
         p.drawRoundedRect(QRectF(2, 2, W - 4, H - 4), 7, 7)
 
-        r = 23; acx = 36; acy = H // 2
+        r = 25; acx = 38; acy = H // 2
         rect = QRectF(acx - r, acy - r, r * 2, r * 2)
         p.setBrush(Qt.BrushStyle.NoBrush)
         p.setPen(QPen(pri(26), 2.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
@@ -194,12 +194,12 @@ class MetricCard(QWidget):
 
         p.setFont(F(11, True)); p.setPen(self._col)
         fm = QFontMetrics(p.font())
-        p.drawText(acx - fm.horizontalAdvance(text) // 2, acy + 5, text)
+        p.drawText(acx - fm.horizontalAdvance(text) // 2, acy + 6, text)
 
         p.setFont(F(9)); p.setPen(DIM)
         p.drawText(acx + r + 10, acy - 10, self._label)
 
-        bx = acx + r + 10; by = acy + 4; bw = W - bx - 10; bh = 4
+        bx = acx + r + 10; by = acy + 6; bw = W - bx - 10; bh = 4
         p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(pri(20)))
         p.drawRoundedRect(QRectF(bx, by, bw, bh), 2, 2)
         lg = QLinearGradient(bx, 0, bx + bw, 0)
@@ -215,7 +215,7 @@ class SystemStatusCard(QWidget):
         self._tick   = 0
         self._online = True
         self._paused = False
-        self.setFixedHeight(56)
+        self.setFixedHeight(70)
         t = QTimer(self); t.timeout.connect(self._step); t.start(60)
 
     def set_online(self, online: bool):
@@ -246,19 +246,19 @@ class SystemStatusCard(QWidget):
 
         da = int(210 + 45 * math.sin(self._tick * 0.10))
         p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(col_fn(da)))
-        p.drawEllipse(QRectF(10, 24, 11, 11))
+        p.drawEllipse(QRectF(10, 26, 11, 11))
         pr_r = 8 + 3 * math.sin(self._tick * 0.10)
         pa   = int(80 + 60 * abs(math.sin(self._tick * 0.10)))
         p.setPen(QPen(col_fn(pa), 0.8)); p.setBrush(Qt.BrushStyle.NoBrush)
-        p.drawEllipse(QPointF(15.5, 29.5), pr_r, pr_r)
+        p.drawEllipse(QPointF(15.5, 31.5), pr_r, pr_r)
 
         p.setFont(F(13, True)); p.setPen(col_fn())
-        p.drawText(28, 37, lbl_txt)
+        p.drawText(28, 41, lbl_txt)
 
         p.setFont(F(9)); p.setPen(pri(110))
-        p.drawText(10, H - 7, "B.0.1.0")
+        p.drawText(10, H - 8, "B.0.1.0")
         p.setFont(F(9)); p.setPen(pri(65))
-        p.drawText(W // 2, H - 7, "GEMINI API")
+        p.drawText(W // 2, H - 8, "GEMINI API")
         p.end()
 
 
@@ -379,15 +379,28 @@ class WorldMapWidget(QWidget):
         p.end()
 
 
+def _shorten_model(name: str) -> str:
+    """nvidia/nemotron-3-super-120b:free → nemotron-120b"""
+    if not name:
+        return ""
+    short = name.split("/")[-1].replace(":free", "").replace(":nitro", "")
+    # Trim long names
+    if len(short) > 24:
+        short = short[:22] + "…"
+    return short.upper()
+
+
 class CommsCard(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._tick = 0
         self._latency_ms = 180
-        self.setFixedHeight(102)
+        self._gemini_online = False
+        self.setFixedHeight(140)
         t = QTimer(self); t.timeout.connect(self._step); t.start(60)
 
     def set_latency(self, ms: int): self._latency_ms = ms; self.update()
+    def set_gemini_online(self, online: bool): self._gemini_online = online; self.update()
 
     def _step(self): self._tick += 1; self.update()
 
@@ -403,15 +416,25 @@ class CommsCard(QWidget):
         p.drawText(10, 17, "COMMS  ·  GEMINI API")
 
         # Gemini online dot + label
-        da = int(210 + 45 * math.sin(self._tick * 0.10))
-        p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(suc(da)))
-        p.drawEllipse(QRectF(10, 25, 9, 9))
-        p.setFont(F(13, True)); p.setPen(SUC)
-        p.drawText(25, 37, "ONLINE")
+        import viko.core.client as _cm
+        model_name = _shorten_model(_cm.active_model)
+        if self._gemini_online:
+            da = int(210 + 45 * math.sin(self._tick * 0.10))
+            dot_col = suc(da); lbl_col = SUC; lbl_text = "ONLINE"
+        else:
+            dot_col = _c(255, 68, 68, 220); lbl_col = _c(255, 68, 68); lbl_text = "OFFLINE"
+        p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(dot_col))
+        p.drawEllipse(QRectF(10, 27, 9, 9))
+        p.setFont(F(13, True)); p.setPen(lbl_col)
+        p.drawText(25, 40, lbl_text)
+
+        # Active model name
+        p.setFont(F(8)); p.setPen(DIM)
+        p.drawText(10, 53, model_name if model_name else "—")
 
         # Separator
         p.setPen(QPen(pri(25), 1))
-        p.drawLine(10, 44, W - 10, 44)
+        p.drawLine(10, 62, W - 10, 62)
 
         # Anthropic / Claude indicator
         claude_active = bool(os.environ.get("ANTHROPIC_API_KEY", "").strip())
@@ -426,17 +449,17 @@ class CommsCard(QWidget):
             lbl_text  = "INACTIVE"
 
         p.setFont(F(9)); p.setPen(DIM)
-        p.drawText(10, 59, "CLAUDE  ·  ANTHROPIC")
+        p.drawText(10, 78, "CLAUDE  ·  ANTHROPIC")
         p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(dot_color))
-        p.drawEllipse(QRectF(10, 65, 8, 8))
+        p.drawEllipse(QRectF(10, 85, 8, 8))
         p.setFont(F(10, True)); p.setPen(lbl_color)
-        p.drawText(24, 76, lbl_text)
+        p.drawText(24, 97, lbl_text)
 
         # Latency bar
         lat = min(1.0, self._latency_ms / 1000)
         p.setFont(F(9)); p.setPen(DIM)
-        p.drawText(10, 96, "LATENCY")
-        bx, by, bw, bh = 62, 88, W - 72, 5
+        p.drawText(10, 121, "LATENCY")
+        bx, by, bw, bh = 68, 113, W - 78, 5
         p.setPen(Qt.PenStyle.NoPen); p.setBrush(QBrush(pri(20)))
         p.drawRoundedRect(QRectF(bx, by, bw, bh), 2, 2)
         lg = QLinearGradient(bx, 0, bx + bw, 0)
@@ -444,7 +467,7 @@ class CommsCard(QWidget):
         p.setBrush(QBrush(lg))
         p.drawRoundedRect(QRectF(bx, by, bw * lat, bh), 2, 2)
         p.setFont(F(9)); p.setPen(suc(175))
-        p.drawText(int(bx + bw * lat) + 4, 96, f"{self._latency_ms}ms")
+        p.drawText(int(bx + bw * lat) + 4, 121, f"{self._latency_ms}ms")
         p.end()
 
 
@@ -455,7 +478,7 @@ class SessionCard(QWidget):
         super().__init__(parent)
         self._tick = 0
         self._ops  = 0   # updated via inc_ops()
-        self.setFixedHeight(60)
+        self.setFixedHeight(74)
         t = QTimer(self); t.timeout.connect(self._step); t.start(1000)
 
     def inc_ops(self): self._ops += 1; self.update()
@@ -475,10 +498,10 @@ class SessionCard(QWidget):
         p.setFont(F(9)); p.setPen(DIM)
         p.drawText(10, 17, "SESSION INTEL")
         p.setFont(F(14, True)); p.setPen(AMB)
-        p.drawText(10, 39, ts)
+        p.drawText(10, 45, ts)
         p.setFont(F(9)); p.setPen(pri(135))
-        p.drawText(10, 54, "UPTIME")
-        p.drawText(W // 2, 54, f"OPS: {self._ops}")
+        p.drawText(10, H - 8, "UPTIME")
+        p.drawText(W // 2, H - 8, f"OPS: {self._ops}")
         p.end()
 
 
@@ -700,7 +723,7 @@ class LogWidget(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
-        self.setFont(F(12))
+        self.setFont(QFont("Courier New", 12))
         self.setStyleSheet("""
             QTextEdit {
                 background: rgba(8,19,34,215);
@@ -873,6 +896,7 @@ class RightMetricsPanel(QWidget):
     def inc_ops(self): self._sess.inc_ops()
 
     def set_latency(self, ms: int): self._comms.set_latency(ms)
+    def set_gemini_online(self, online: bool): self._comms.set_gemini_online(online)
 
 
 class ActivityPanel(QWidget):
