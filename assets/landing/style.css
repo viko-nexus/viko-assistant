@@ -2,15 +2,15 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --black:  #000000;
-  --card:   #04080E;
+  --black:  #040D18;
+  --card:   #071525;
   --txt:    #F2F9FF;
-  --body:   #D4E8F5;
-  --dim:    #5A91B9;
+  --body:   #DCEEF8;
+  --dim:    #6AABCC;
   --pri:    #00D4FF;
   --amb:    #FFB347;
   --suc:    #00FF9F;
-  --border: #0d1f2d;
+  --border: #122840;
 }
 
 html { scroll-behavior: smooth; }
@@ -73,7 +73,7 @@ body {
 /* ════ HEADER ════ */
 header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(0,0,0,0.92);
+  background: rgba(4,13,24,0.94);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   padding: 0 48px; height: 64px;
@@ -104,20 +104,20 @@ header {
 
 /* Layer 1 — faint screenshot BG */
 .hero-bg { position: absolute; inset: 0; z-index: 0; }
-.hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: top left; opacity: 0.25; }
+.hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: top left; opacity: 0.35; }
 
 /* Layer 2 — gradient overlays */
 .hero-fade-top {
   position: absolute; top: 0; left: 0; right: 0; height: 80px;
-  background: linear-gradient(to bottom, #000, transparent); z-index: 2;
+  background: linear-gradient(to bottom, #040D18, transparent); z-index: 2;
 }
 .hero-fade-left {
   position: absolute; left: 0; top: 0; bottom: 0; width: 65%;
-  background: linear-gradient(to right, rgba(0,0,0,0.92) 40%, transparent 100%); z-index: 2;
+  background: linear-gradient(to right, rgba(4,13,24,0.92) 40%, transparent 100%); z-index: 2;
 }
 .hero-fade-bottom {
   position: absolute; bottom: 0; left: 0; right: 0; height: 140px;
-  background: linear-gradient(to bottom, transparent, #000); z-index: 2;
+  background: linear-gradient(to bottom, transparent, #040D18); z-index: 2;
 }
 
 /* Layer 3 — HUD circle */
@@ -206,7 +206,7 @@ header {
   display: flex; flex-direction: column; gap: 10px;
   transition: background 0.2s;
 }
-.feature-card:hover { background: #060d16; }
+.feature-card:hover { background: #0D2038; }
 .feature-icon { font-size: 20px; color: var(--pri); line-height: 1; }
 .feature-card.amber .feature-icon { color: var(--amb); }
 .feature-card.green  .feature-icon { color: var(--suc); }
@@ -276,7 +276,7 @@ footer { padding: 40px 64px; display: flex; justify-content: space-between; alig
 
   .hero { height: auto; min-height: 500px; padding: 80px 0 48px; }
   .hero-hud { right: 50%; transform: translate(50%, -50%); width: 420px; height: 420px; opacity: 0.2; }
-  .hero-fade-left { width: 100%; background: rgba(0,0,0,0.7); }
+  .hero-fade-left { width: 100%; background: rgba(4,13,24,0.75); }
   .hero-content { width: 100%; padding: 0 24px; }
   .hero-title { font-size: 52px; letter-spacing: 6px; }
   .hero-tagline { font-size: 18px; }

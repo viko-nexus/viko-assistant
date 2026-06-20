@@ -5,6 +5,9 @@
 # Brainstorming / superpowers session files
 .superpowers/
 
+# Claude Code local config — settings are user-specific, skills are tracked
+.claude/settings.json
+
 # Secrets & config
 .env
 config/api_keys.json

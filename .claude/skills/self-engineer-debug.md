@@ -42,7 +42,7 @@ print('State cleared')
 ## Run Tests
 
 ```bash
-python3 -m pytest tests/self_engineer/ -v
+python -m pytest tests/self_engineer/ -v
 ```
 
 ## Restore Latest Backup
@@ -62,7 +62,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 key = os.environ.get('ANTHROPIC_API_KEY')
-print('Provider: Claude' if key else 'Provider: Gemini (fallback)')
+print('Provider: Claude (claude-sonnet-4-6)' if key else 'Provider: Gemini (gemini-2.5-flash)')
 "
 ```
 
@@ -71,7 +71,7 @@ print('Provider: Claude' if key else 'Provider: Gemini (fallback)')
 ```
 self_update(action="create_skill"|"fix_bug"|"modify_prompt"|"modify_ui")
   → analyzer.build_context()
-  → planner.generate()      ← LLM call (Claude or Gemini)
+  → planner.generate()       ← LLM call (Claude or Gemini)
   → saves pending_plan.json
   → returns "Plan summary. Lanjutkan?"
 
@@ -88,3 +88,18 @@ self_update(action="confirm")   ← user said "ya restart"
   → os.execv (process replace)
   → new VIKO detects restart flag → announces update
 ```
+
+## Common Issues
+
+**"Stuck in pending_plan state"**
+→ Clear with `_clear_pending_plan()` above. Then retry the voice command.
+
+**"Test failed after generate"**
+→ Automatic rollback should have run. Check: `list_history()` — verify latest backup has `restorable: True`.
+→ Manual restore: `restore_latest()` then restart VIKO.
+
+**"os.execv restart loop"**
+→ Clear `/tmp/viko_restart_pending.json` if it exists. Restart VIKO manually.
+
+**"LLM call timeout"**
+→ Check ANTHROPIC_API_KEY / GEMINI_API_KEY are valid: `python3 -c "from viko.core.config import get_gemini_key; print(get_gemini_key()[:10])"`

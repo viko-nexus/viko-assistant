@@ -2,7 +2,7 @@
 
 VIKO is a personal AI voice assistant built with PyQt6 and Google Gemini Live API. It listens to your voice, executes tools, and can even modify its own source code on command.
 
-> **Proprietary software. See [LICENSE](LICENSE) for terms.**
+> **Non-commercial use only. See [LICENSE](LICENSE) for terms.**
 
 ---
 
@@ -46,7 +46,7 @@ VIKO is a personal AI voice assistant built with PyQt6 and Google Gemini Live AP
 
 ```bash
 # 1. Clone
-git clone <repo-url>
+git clone git@github.com:viko-nexus/viko-assistant.git
 cd viko-assistant
 
 # 2. Install dependencies
@@ -209,4 +209,4 @@ Or say: *"Viko, add a skill to [description]"* and let VIKO build it.
 
 ## License
 
-Proprietary. See [LICENSE](LICENSE). All rights reserved.
+[PolyForm Noncommercial License 1.0.0](LICENSE) — free for personal, educational, and non-commercial use. © 2026 Viko Nexus.
