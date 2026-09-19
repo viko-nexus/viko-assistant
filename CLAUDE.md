@@ -195,6 +195,31 @@ Total: **59 tests**. All must pass before any commit.
 
 Run: `python -m pytest tests/ -v`
 
+## Delivery Procedure
+
+Applies to every change. Same gate as the other eksa repos (`doa-sas/infra`, `siprodev`, `shipflo`).
+
+### Testing
+- `ruff check viko/ viko.py` — zero findings
+- `python -m pytest tests/ -v` — all 59 tests pass; new testable modules get tests first (TDD)
+- Lint tool not installed → skip **and say so** — never pretend it ran
+
+### Development
+- Conventional Commits: `feat` / `fix` / `chore` / `docs` / `refactor` / `test`
+- Code, comments, commit messages in English; VIKO speaks Indonesian; chat with the owner in Bahasa Indonesia
+- Comments at most two lines, only for a non-obvious WHY; no leftover debug output
+- Never commit `.env`, `memory/*.db`, `memory/*.sqlite3`, `memory/voice_profile.npy`, or `workspace/` files
+- Every fix goes on its own branch — no direct commits to `main`
+
+### Deployment
+VIKO runs on the owner's machine — deploy = pull `main` and restart the process.
+
+1. Run ruff + pytest, fix every finding. A deliberate warning gets a two-line comment saying why.
+2. Back up `memory/` and `viko/self_engineer/backups/` before changes to `self_engineer/` or speaker verification.
+3. Branch, open a PR. Body states which runtime files change and whether a restart is needed.
+4. Merge when checks pass.
+5. `git pull`, `pkill -f "python.*viko.py"`, restart, then confirm wake word responds. Done when VIKO answers, not when the merge succeeded.
+
 ## Docs
 
 - [docs/overview/ARCHITECTURE.md](docs/overview/ARCHITECTURE.md) — component breakdown, data flow
